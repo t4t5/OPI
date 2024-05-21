@@ -345,7 +345,7 @@ def reset_caches():
   print("Ticks refreshed in " + str(time.time() - sttm) + " seconds")
 
 block_start_max_event_id = None
-brc20_events_insert_sql = '''insert into brc20_events (id, event_type, block_height, inscription_id, event) values '''
+brc20_events_insert_sql = '''insert into brc20_events (id, event_type, block_height, inscription_id, event, from_wallet, to_wallet) values '''
 brc20_events_insert_cache = []
 brc20_tickers_insert_sql = '''insert into brc20_tickers (tick, original_tick, max_supply, decimals, limit_per_mint, remaining_supply, block_height, is_self_mint, deploy_inscription_id) values '''
 brc20_tickers_insert_cache = []
@@ -371,7 +371,7 @@ def deploy_inscribe(block_height, inscription_id, deployer_pkScript, deployer_wa
   }
   block_events_str += get_event_str(event, "deploy-inscribe", inscription_id) + EVENT_SEPARATOR
   event_id = block_start_max_event_id + len(brc20_events_insert_cache) + 1
-  brc20_events_insert_cache.append((event_id, event_types["deploy-inscribe"], block_height, inscription_id, json.dumps(event)))
+  brc20_events_insert_cache.append((event_id, event_types["deploy-inscribe"], block_height, inscription_id, json.dumps(event), None, deployer_wallet))
   
   brc20_tickers_insert_cache.append((tick, original_tick, max_supply, decimals, limit_per_mint, max_supply, block_height, is_self_mint == "true", inscription_id))
   
@@ -390,7 +390,7 @@ def mint_inscribe(block_height, inscription_id, minted_pkScript, minted_wallet, 
   }
   block_events_str += get_event_str(event, "mint-inscribe", inscription_id) + EVENT_SEPARATOR
   event_id = block_start_max_event_id + len(brc20_events_insert_cache) + 1
-  brc20_events_insert_cache.append((event_id, event_types["mint-inscribe"], block_height, inscription_id, json.dumps(event)))
+  brc20_events_insert_cache.append((event_id, event_types["mint-inscribe"], block_height, inscription_id, json.dumps(event), None, minted_wallet))
   brc20_tickers_remaining_supply_update_cache[tick] = brc20_tickers_remaining_supply_update_cache.get(tick, 0) + amount
 
   last_balance = get_last_balance(minted_pkScript, tick)
@@ -412,7 +412,7 @@ def transfer_inscribe(block_height, inscription_id, source_pkScript, source_wall
   }
   block_events_str += get_event_str(event, "transfer-inscribe", inscription_id) + EVENT_SEPARATOR
   event_id = block_start_max_event_id + len(brc20_events_insert_cache) + 1
-  brc20_events_insert_cache.append((event_id, event_types["transfer-inscribe"], block_height, inscription_id, json.dumps(event)))
+  brc20_events_insert_cache.append((event_id, event_types["transfer-inscribe"], block_height, inscription_id, json.dumps(event), source_wallet, None))
   set_transfer_as_valid(inscription_id)
   
   last_balance = get_last_balance(source_pkScript, tick)
@@ -439,7 +439,7 @@ def transfer_transfer_normal(block_height, inscription_id, spent_pkScript, spent
   }
   block_events_str += get_event_str(event, "transfer-transfer", inscription_id) + EVENT_SEPARATOR
   event_id = block_start_max_event_id + len(brc20_events_insert_cache) + 1
-  brc20_events_insert_cache.append((event_id, event_types["transfer-transfer"], block_height, inscription_id, json.dumps(event)))
+  brc20_events_insert_cache.append((event_id, event_types["transfer-transfer"], block_height, inscription_id, json.dumps(event), source_wallet, spent_wallet))
   set_transfer_as_used(inscription_id)
   
   last_balance = get_last_balance(source_pkScript, tick)
@@ -473,7 +473,7 @@ def transfer_transfer_spend_to_fee(block_height, inscription_id, tick, original_
   }
   block_events_str += get_event_str(event, "transfer-transfer", inscription_id) + EVENT_SEPARATOR
   event_id = block_start_max_event_id + len(brc20_events_insert_cache) + 1
-  brc20_events_insert_cache.append((event_id, event_types["transfer-transfer"], block_height, inscription_id, json.dumps(event)))
+  brc20_events_insert_cache.append((event_id, event_types["transfer-transfer"], block_height, inscription_id, json.dumps(event), source_wallet, None))
   set_transfer_as_used(inscription_id)
   
   last_balance = get_last_balance(source_pkScript, tick)
