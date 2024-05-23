@@ -10,7 +10,7 @@ CREATE TABLE public.brc20_historic_balances (
 	id bigserial NOT NULL,
 	pkscript text NOT NULL,
 	wallet text NULL,
-	tick varchar(4) NOT NULL,
+	tick text NOT NULL,
 	overall_balance numeric(40) NOT NULL,
 	available_balance numeric(40) NOT NULL,
 	block_height int4 NOT NULL,
@@ -30,23 +30,32 @@ CREATE TABLE public.brc20_events (
 	block_height int4 NOT NULL,
 	inscription_id text NOT NULL,
 	"event" jsonb NOT NULL,
+  from_wallet text NULL, -- added by t4t5
+  to_wallet text NULL, -- added by t4t5
 	CONSTRAINT events_pk PRIMARY KEY (id)
 );
 CREATE UNIQUE INDEX brc20_events_event_type_inscription_id_idx ON public.brc20_events USING btree (event_type, inscription_id);
 CREATE INDEX brc20_events_block_height_idx ON public.brc20_events USING btree (block_height);
 CREATE INDEX brc20_events_event_type_idx ON public.brc20_events USING btree (event_type);
 CREATE INDEX brc20_events_inscription_id_idx ON public.brc20_events USING btree (inscription_id);
+CREATE INDEX brc20_events_from_wallet_idx ON public.brc20_events USING btree (from_wallet);
+CREATE INDEX brc20_events_to_wallet_idx ON public.brc20_events USING btree (to_wallet);
 
 CREATE TABLE public.brc20_tickers (
 	id bigserial NOT NULL,
-	tick varchar(4) NOT NULL,
+	original_tick text NOT NULL,
+	tick text NOT NULL,
 	max_supply numeric(40) NOT NULL,
 	decimals int4 NOT NULL,
 	limit_per_mint numeric(40) NOT NULL,
 	remaining_supply numeric(40) NOT NULL,
+	burned_supply numeric(40) NOT NULL DEFAULT 0,
+	is_self_mint boolean NOT NULL,
+	deploy_inscription_id text NOT NULL,
 	block_height int4 NOT NULL,
 	CONSTRAINT brc20_tickers_pk PRIMARY KEY (id)
 );
+CREATE UNIQUE INDEX brc20_tickers_original_tick_idx ON public.brc20_tickers USING btree (original_tick);
 CREATE UNIQUE INDEX brc20_tickers_tick_idx ON public.brc20_tickers USING btree (tick);
 
 CREATE TABLE public.brc20_cumulative_event_hashes (
@@ -73,6 +82,7 @@ CREATE TABLE public.brc20_indexer_version (
 	id bigserial NOT NULL,
 	indexer_version text NOT NULL,
 	db_version int4 NOT NULL,
+	event_hash_version int4 NOT NULL,
 	CONSTRAINT brc20_indexer_version_pk PRIMARY KEY (id)
 );
-INSERT INTO public.brc20_indexer_version (indexer_version, db_version) VALUES ('opi-brc20-full-node v0.3.0', 3);
+INSERT INTO public.brc20_indexer_version (indexer_version, db_version, event_hash_version) VALUES ('opi-brc20-full-node v0.4.1', 5, 2);
